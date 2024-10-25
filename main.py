@@ -67,19 +67,18 @@ def main():
                                     'to the \'\'Distributions.lua\'\' and \'\'ProceduralDistributions.lua\'\' files ' \
                                     'in your Project Zomboid install directory. '
 
-    export_result = export_result + '\n\n== Room Defines and Item Spawns =='
+    export_result = export_result + '\n\n==Room definitions and item spawns=='
+
+    # Initialize a single table
+    export_result += '\n{| class="wikitable theme-blue"'
 
     for entry in sorted(distribution_entries, key=lambda e: e.name.lower()):
         if entry.type == Distribution.TYPE_ROOM:
-            export_result = export_result + '\n==={}==='.format(entry.name)
-            description = ROOM_DESCRIPTIONS.get(entry.name)
-            if description:
-                export_result = '\n' + export_result + description
+            # Add a new room category with <h2> style
+            export_result += '\n|-\n! colspan="2" | \n<h2 style="margin-top:0;">{}</h2>'.format(entry.name)
 
-            export_result = export_result + '\n{| class="wikitable theme-blue"'
-            export_result = export_result + '\n|-'
-            # header = '! Header text !! Header text !! Header text'
-            export_result = export_result + '\n! Container !! Items'
+            # Static headers for containers and items
+            export_result += '\n|-\n! Container !! Items'
 
             containers = sorted(entry.containers)
 
@@ -88,19 +87,22 @@ def main():
                 items.append(item)
             items = sorted(items, key=lambda i: i.id)
 
+            # Add each container and the associated items in the table
             for container in containers:
-                result = '| [[{}]] || '.format(container)
+                result = '\n| [[{}]] || '.format(container)
                 any_appended = False
                 for item in items:
                     if container in item.containers:
-                        result = '{}[[{}]], '.format(result, item.id)
+                        result += '[[{}]], '.format(item.id)
                         any_appended = True
                 if any_appended:
-                    export_result = export_result + '\n|-'
-                    export_result = export_result + '\n' + result[:-2]
+                    export_result += '\n|-'  # New row for the container and items
+                    export_result += result[:-2]  # Remove the trailing comma and space
 
-            export_result = export_result + '\n|}'
+    # Close the table
+    export_result += '\n|}'
 
+    # Write the result to the file
     exports_file_path = root_path.joinpath(EXPORTS_FILE_PATH)
     if exports_file_path.exists():
         exports_file_path.unlink()
